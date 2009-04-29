@@ -14,12 +14,6 @@ module Nomad
       Nomad::Registrar.new
     end
     
-    context "starting up" do
-      it "should bring the redis daemon up" do
-        registrar = start_registrar
-        registrar.redis.class.should == Redis
-        stop_registrar registrar
-      end
     end # END context
   end
 end

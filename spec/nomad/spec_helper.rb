@@ -15,19 +15,31 @@ module RegistrarHelpers
   end
     
   def stop_registrar registrar
-    registrar.stop_redis
     @thin.stop!
     Thread.kill(@thin_thread)
   end
 end
 
 module ClientHelpers
-  def client
+  def daigo
     Nomad::Client.new(
       :registrar => '127.0.0.1', :port => 9292,
       :url => '/cluster/registration.json',
       :registration => {
         :name => 'daigo',
+        :ip => '127.0.0.1',
+        :services => '/xend/status /xen/customer/domains /xen/customer/storage /xen/customer/bandwidth /merb/status /redis/status'
+      }
+    )
+  end
+
+  def kusunoki
+    Nomad::Client.new(
+      :registrar => '127.0.0.1', :port => 9292,
+      :url => '/cluster/registration.json',
+      :registration => {
+        :name => 'kusunoki',
+        :ip => '192.168.77.199',
         :services => '/xend/status /xen/customer/domains /xen/customer/storage /xen/customer/bandwidth'
       }
     )
