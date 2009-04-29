@@ -1,4 +1,5 @@
 module Nomad  
+      
   # The agent component queries the selected websever(s) running on cluster client
   # nodes, and returns the object back.  Currently supports JSON encodings, but
   # future encodings will be added based on the mime_type received.
@@ -12,10 +13,19 @@ module Nomad
   # status = gather '/xen/domain/info.json', :from => :all, :name => 'test01'
   # status = gather '/xen/domain/info.json', :from => :all_but_me, :name => 'test01'
   class Agent
-    def hunt url_string, params={}
-      raise "Method requires 'from' option be given" unless params[:from]
-      host = get_host params.delete(:from)
-      content = FastHttp::HttpClient.new(host, 4567).get(url_string).http_body
+    
+    attr :lookup_method,  true
+    attr :hunt_selectors, true
+    attr :gather_selectors, true
+        
+    def initialize(opts={})
+      lookup_method    = opts[:lookup_method] || choose_lookup_method
+      hunt_selectors   = [:random, :least_loaded, :rr, :previous]
+      gather_selectors = [:all, :all_but_me, :several]
+    end
+    
+    def hunt target, url_string
+      content = FastHttp::HttpClient.new(target, 4567).get(url_string).http_body
       resp = JSON.parse(content)
       result = nil
       if resp['success']
@@ -37,15 +47,28 @@ module Nomad
       end
       result  
     end
-
+    
     private 
-
-    def get_host
+    
+    def find
       
     end
-
-    def get_hosts
+    
+    def registry
       
     end
+    
+    # If redis server is available and if Nomad is using it, use redis;
+    # otherwise, connect to the registrar over HTTP
+    def choose_lookup_method
+      begin
+        redis = Redis.new
+      rescue Exception => e
+        return :http
+      else
+        return redis['/nomad/activated_at'] ? :redis : :http
+      end
+    end
+
   end
 end
