@@ -3,12 +3,28 @@ require 'redis'
 
 module Nomad
   class VirtualRegistry
-    attr :namespace
-    attr :baseurl
+    attr :opts
 
-    def initialize(opts={})
-      @baseurl   = opts[:baseurl] || 'cluster'
-      @namespace = opts[:namespace] || 'nomad'
+    def initialize(options={})
+      options[:baseurl]   ||= 'cluster'
+      options[:namespace] ||= 'nomad'
+      @opts = options
+    end
+        
+    def baseurl
+      opts[:baseurl]
+    end
+    
+    def baseurl= base
+      opts[:baseurl] = base
+    end
+    
+    def namespace
+      opts[:namespace]
+    end
+    
+    def namespace= name
+      opts[:namespace] = name
     end
     
     private
@@ -19,10 +35,9 @@ module Nomad
   end
   
   class HttpRegistry < Nomad::VirtualRegistry
-    attr :http
     
-    def initialize(opts={})
-      super
+    def initialize(options={})
+      super(options)
       raise "Host option is required" unless opts[:host]
       opts[:port] ||= 9292
       @http = FastHttp::HttpClient.new( opts[:host], opts[:port] )
@@ -65,9 +80,9 @@ module Nomad
     
     REDIS_BIN='/usr/bin/redis-server'
     
-    def initialize
-      super
-      @redis = Redis.new
+    def initialize(options={})
+      super(options)
+      @redis = Redis.new opts
     end
     
     def [] client_name
